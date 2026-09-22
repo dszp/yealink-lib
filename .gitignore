@@ -1,0 +1,10 @@
+dist/
+node_modules/
+.DS_Store
+.vscode/
+.env
+.dev.vars
+CLAUDE.md
+docs/
+*.tgz
+leak-patterns.txt
