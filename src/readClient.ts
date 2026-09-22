@@ -22,6 +22,7 @@ import type {
   ListOptions,
   Rec,
   YmcsAlarm,
+  YmcsBoundAccount,
   YmcsDevice,
   YmcsDeviceGroup,
   YmcsDiagnosisStatus,
@@ -46,8 +47,10 @@ export function listEndpoint<T>(
 ): Promise<T[]> {
   const dataKey = opts.dataKey ?? 'data';
   const fetchPage = async (page: PageRequest): Promise<YmcsPage<T>> => {
-    const body: Rec = { ...page };
-    if (opts.filter !== undefined) body.filter = opts.filter;
+    // `filter` is ALWAYS sent, as `{}` when the caller gave none. Most list endpoints tolerate its
+    // absence, but `listOfficalFirmwares` answers 400 (code 900400, "filter: Cannot be null") —
+    // verified live 2026-09-22. `{}` is accepted everywhere.
+    const body: Rec = { ...page, filter: opts.filter ?? {} };
     const raw = await http.request<Rec>('POST', path, { body });
     return { skip: page.skip, limit: page.limit, total: raw.total as number | undefined, data: (raw[dataKey] as T[]) ?? [] };
   };
@@ -124,9 +127,16 @@ export class YmcsReadClient {
     return this.#get(`/v2/dm/devices/${segment('deviceId', deviceId)}/parts/${segment('partId', partId)}`);
   }
 
-  /** SIP accounts currently bound to the device. Not paginated upstream. */
-  async listBoundAccounts(deviceId: string): Promise<Rec> {
-    return this.#get(`/v2/dm/devices/${segment('deviceId', deviceId)}/boundAccounts`);
+  /**
+   * Accounts bound to a PHONE's line keys. Not paginated upstream; the `{ data }` envelope is
+   * unwrapped here. ⚠️ Phones only — a room device (MeetingBar, CTP) answers 400 code 800005
+   * "Illegal device type" (verified live 2026-09-22), which surfaces as a `YmcsApiError`.
+   */
+  async listBoundAccounts(deviceId: string): Promise<YmcsBoundAccount[]> {
+    const raw = await this.#get<unknown>(`/v2/dm/devices/${segment('deviceId', deviceId)}/boundAccounts`);
+    if (Array.isArray(raw)) return raw as YmcsBoundAccount[];
+    const data = (raw as Rec | null)?.data;
+    return Array.isArray(data) ? (data as YmcsBoundAccount[]) : [];
   }
 
   async getNetworkInterfaces(deviceId: string): Promise<Rec> {
@@ -190,12 +200,15 @@ export class YmcsReadClient {
   }
 
   /**
-   * Yealink-published firmware. Filter: `{ modelId? }`.
+   * Yealink-published firmware for ONE model. `modelId` is required by the server (verified live
+   * 2026-09-22: 400 code 900400 "modelId: Cannot be empty" without it), so it is positional here
+   * rather than an optional filter key — get ids from `listModels`.
    * The wire path is `listOfficalFirmwares` — Yealink's spelling, matched exactly; only the method
    * name is corrected.
    */
-  async listOfficialFirmwares(opts: ListOptions<{ modelId?: string } & Rec> = {}): Promise<YmcsFirmware[]> {
-    return listEndpoint(this.#http, '/v2/dm/listOfficalFirmwares', opts);
+  async listOfficialFirmwares(modelId: string, opts: ListOptions<Rec> = {}): Promise<YmcsFirmware[]> {
+    if (!modelId) throw new Error('yealink-lib: listOfficialFirmwares needs a modelId (the server rejects an empty one)');
+    return listEndpoint(this.#http, '/v2/dm/listOfficalFirmwares', { ...opts, filter: { ...(opts.filter ?? {}), modelId } });
   }
 
   /** Device models for a device type. The only list that is a `GET` with a query string, and unpaginated. */

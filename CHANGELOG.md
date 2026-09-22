@@ -23,6 +23,21 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **`YmcsApiError`** carrying `status`, `code`, `requestId` and per-field `details`.
 - No default region: `region` or `baseUrl` is required.
 
+### Verified live (2026-09-22, read-only, one production enterprise)
+
+- Auth, sites, devices (250-row walk at the 100 cap), models, device lookup by MAC, firmware,
+  alarms, operation logs, RPS servers and devices, configuration templates.
+- `listOfficalFirmwares` answers 400 when `filter` is absent, and again when `filter.modelId` is
+  empty. Every list now sends `filter: {}` by default, and `listOfficialFirmwares(modelId)` takes
+  the model id positionally.
+- `boundAccounts` is phone-only: a room device answers 400 code `800005`. The `{ data }`
+  envelope is unwrapped to `YmcsBoundAccount[]`.
+- `getDeviceConfigs` answers `{ deviceConfig, siteConfig, globalConfig, enforceConfig }`.
+- An unknown id answers **400 with code `900400`**, not 404. Check `YmcsApiError.code`.
+- `GET /v2/dm/devices/{id}` returns more than the list row does (`accounts`, `wifi`, `sensor`,
+  `personCount`, `lanIp`/`wanIp`); the list row carries `modelName`, `siteName`, `groupNames`,
+  `lastReportTime`. Neither is in the reference's example.
+
 ### Notes
 
 - Extracted from `@dszp/n8n-nodes-yealinkymcs` 0.3.0. Request shapes are the ones that node

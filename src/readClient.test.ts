@@ -45,7 +45,6 @@ describe('GET reads', () => {
     ['getDevice', ['dev-0001'], '/v2/dm/devices/dev-0001'],
     ['getDeviceConfigs', ['dev-0001'], '/v2/dm/devices/dev-0001/configs'],
     ['getDevicePart', ['dev-0001', 'part-1'], '/v2/dm/devices/dev-0001/parts/part-1'],
-    ['listBoundAccounts', ['dev-0001'], '/v2/dm/devices/dev-0001/boundAccounts'],
     ['getNetworkInterfaces', ['dev-0001'], '/v2/dm/devices/dev-0001/networkInterfaces'],
     ['getDeviceConfig', ['cfg-1'], '/v2/dm/deviceConfigs/cfg-1'],
     ['getSiteConfig', ['cfg-1'], '/v2/dm/siteConfigs/cfg-1'],
@@ -71,6 +70,13 @@ describe('GET reads', () => {
     expect(await b.c.listModels(DeviceType.Room)).toEqual([{ id: 'm2', name: 'MeetingBar' }]);
   });
 
+  it('listBoundAccounts unwraps the {data} envelope and tolerates an empty body', async () => {
+    const a = client({ routes: { 'GET /v2/dm/devices/dev-0001/boundAccounts': { body: { data: [{ accountId: 'acc-1', lineId: 1 }] } } } });
+    expect(await a.c.listBoundAccounts('dev-0001')).toEqual([{ accountId: 'acc-1', lineId: 1 }]);
+    const b = client({ routes: { 'GET /v2/dm/devices/dev-0001/boundAccounts': { status: 204 } } });
+    expect(await b.c.listBoundAccounts('dev-0001')).toEqual([]);
+  });
+
   it('resolveDeviceIds posts the MAC lookup shape', async () => {
     const { mock, c } = client({ routes: { 'POST /v2/dm/deviceId': { body: [{ key: '001565000001', deviceId: 'dev-0001' }] } } });
     const out = await c.resolveDeviceIds(['001565000001'], DeviceType.Phone);
@@ -88,7 +94,6 @@ describe('POST list reads', () => {
     ['listSiteConfigs', '/v2/dm/listSiteConfigs'],
     ['listGroupConfigs', '/v2/dm/listGroupConfigs'],
     ['listFirmwares', '/v2/dm/listFirmwares'],
-    ['listOfficialFirmwares', '/v2/dm/listOfficalFirmwares'],
     ['listAlarms', '/v2/dm/listAlarms'],
     ['listOperationLogs', '/v2/dm/listOpLogs'],
     ['listRpsDevices', '/v2/rps/listDevices'],
@@ -102,10 +107,17 @@ describe('POST list reads', () => {
     expect(call.body).toEqual({ skip: 0, limit: 500, autoCount: true, filter: { name: 'x' } });
   });
 
-  it('omits filter when none is given, and sends {} semantics rather than no body', async () => {
+  it('listOfficialFirmwares requires modelId and puts it in the filter', async () => {
+    const { mock, c } = client({ routes: { 'POST /v2/dm/listOfficalFirmwares': { body: page([{ id: 'ofw-1' }], 1) } } });
+    await expect(c.listOfficialFirmwares('')).rejects.toThrow(/modelId/);
+    expect(await c.listOfficialFirmwares('model-t54w', { limit: 5 })).toEqual([{ id: 'ofw-1' }]);
+    expect(mock.apiCalls()[0].body).toEqual({ skip: 0, limit: 5, autoCount: true, filter: { modelId: 'model-t54w' } });
+  });
+
+  it('always sends filter, as {} when none is given (listOfficalFirmwares 400s without it)', async () => {
     const { mock, c } = client({ routes: { "POST /v2/dm/listSites": { body: page([], 0) } } });
     await c.listSites();
-    expect(mock.apiCalls()[0].body).toEqual({ skip: 0, limit: 500, autoCount: true });
+    expect(mock.apiCalls()[0].body).toEqual({ skip: 0, limit: 500, autoCount: true, filter: {} });
   });
 
   it('listDevices caps the page at 100 and pages by total', async () => {

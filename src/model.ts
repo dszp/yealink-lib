@@ -150,6 +150,17 @@ export interface YmcsRpsServer extends Rec {
   authName?: string;
 }
 
+/** One row of `GET /v2/dm/devices/{id}/boundAccounts`. `accountType`: 0 SIP, 1 H.323, 2 SfB. */
+export interface YmcsBoundAccount extends Rec {
+  accountId: string;
+  /** 1-based line key. */
+  lineId?: number;
+  accountType?: number;
+  accountServer?: string;
+  registerName?: string;
+  username?: string;
+}
+
 /** Answer to `POST /v2/dm/deviceId`: one row per requested key that the enterprise owns. */
 export interface DeviceIdLookup {
   key: string;

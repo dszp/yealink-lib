@@ -19,6 +19,7 @@ export type {
   YmcsModel,
   YmcsFirmware,
   YmcsAlarm,
+  YmcsBoundAccount,
   YmcsOperationLog,
   YmcsRpsDevice,
   YmcsRpsServer,

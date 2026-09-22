@@ -67,6 +67,7 @@ The cache holds the access token only, keyed by host and client id. The secret i
   undefined means no body and `{}` means `{}`.
 - **Errors.** `YmcsApiError` carries `status`, YMCS's `code`, the `requestId` support asks for, and
   per-field `details`. A proxy's HTML error page still becomes a `YmcsApiError` with its status.
+  An unknown id answers **400 with code `900400`**, not 404: test `err.code`, not the status.
 
 ## Read / write split
 

@@ -70,6 +70,8 @@ function describe(status: number, body: unknown): string {
     if (d) parts.push(d);
   }
   if (parts.length) return parts.join(' — ');
+  // Note for readers of the message: YMCS answers an UNKNOWN id with 400 code 900400 ("This resource
+  // does not exist or has been deleted"), never 404. Test `err.code`, not `err.status === 404`.
   const raw = typeof body === 'string' ? body : JSON.stringify(body);
   if (status === 412) return `precondition failed (a POST with no body at all answers this — send {} instead)${raw ? `: ${raw.slice(0, 200)}` : ''}`;
   return (raw ?? '').slice(0, 500);
