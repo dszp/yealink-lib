@@ -1,11 +1,19 @@
 # @dszp/yealink-lib
 
-Portable, Node-free toolkit for the Yealink Management Cloud Service (YMCS) Open API V4X. Runs
-unchanged in a Cloudflare Worker, Node, or the browser. Zero runtime dependencies.
+Portable, Node-free toolkit for Yealink's device-management cloud. Runs unchanged in a Cloudflare
+Worker, Node, or the browser. Zero runtime dependencies.
 
-It covers device management (sites, devices, groups, SIP accounts, configuration templates,
-firmware, alarms, diagnostics) and RPS (redirect / zero-touch provisioning), with the OAuth2
-client-credentials exchange and the per-request `timestamp`/`nonce` headers handled for you.
+Yealink runs two services behind one API, the YMCS Open API V4X, and one set of credentials
+reaches both:
+
+- **YMCS** (Yealink Management Cloud Service) manages devices after deployment: sites, devices,
+  groups, SIP accounts, configuration templates, firmware, alarms and diagnostics.
+- **RPS** (Redirect and Provisioning Service) handles zero-touch deployment: it points a device
+  at its provisioning server by MAC address the first time the device boots.
+
+The library covers both, and handles the OAuth2 client-credentials exchange and the per-request
+`timestamp`/`nonce` headers for you. Class and type names start with `Ymcs` because that is the
+API's name; the RPS methods live on the same clients.
 
 ## Install
 
