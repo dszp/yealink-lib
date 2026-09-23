@@ -251,4 +251,8 @@ export class YmcsReadClient {
   async listRpsServers(opts: ListOptions<{ searchKey?: string; name?: string } & Rec> = {}): Promise<YmcsRpsServer[]> {
     return listEndpoint(this.#http, '/v2/rps/listServers', opts);
   }
+
+  async getRpsServer(rpsServerId: string): Promise<YmcsRpsServer> {
+    return this.#get(`/v2/rps/servers/${segment('rpsServerId', rpsServerId)}`);
+  }
 }

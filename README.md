@@ -76,12 +76,47 @@ The cache holds the access token only, keyed by host and client id. The secret i
 - **Errors.** `YmcsApiError` carries `status`, YMCS's `code`, the `requestId` support asks for, and
   per-field `details`. A proxy's HTML error page still becomes a `YmcsApiError` with its status.
   An unknown id answers **400 with code `900400`**, not 404: test `err.code`, not the status.
+- **Bulk results.** Bulk calls (`deleteDevices`, `rebootDevices`, `bindAccounts`, `deleteRpsDevices`
+  and the rest) answer HTTP 200 with a `YmcsBulkResult` even when items fail. A MAC that does not
+  exist comes back as `failureCount: 1` with a row in `errors`, not as an exception. Check
+  `failureCount`.
 
 ## Read / write split
 
-`YmcsReadClient` exposes no mutating methods; a consumer holding one knows it cannot write.
+`YmcsReadClient` has no method that writes, and it cannot be made to: it keeps its transport in a
+JavaScript private field, the transport class is not exported, and the package exports only its
+root entry point. A consumer that holds a `YmcsReadClient` cannot write by accident.
+
 `YmcsWriteClient` is the only mutation surface. Its `request()` and `requestAllItems()` reach any
-endpoint the library does not name, with the same auth and paging.
+endpoint the library does not name, with the same auth and paging. They sit on the write client
+because YMCS lists are POSTs: a passthrough cannot tell a read from a write by its HTTP method.
+
+## Device management and RPS sync
+
+An enterprise can sync device management with RPS. With sync on, observed on one enterprise:
+
+- `createDevice` and `addDevices` also create the device in RPS, with no server assigned. Assign
+  one with `updateRpsDevice(id, { serverId })`.
+- `deleteDevice` and `deleteDevices` also delete the device from RPS.
+- `createRpsDevice` does not create the device in device management. `addRpsDevices` does, in the
+  site the enterprise's sync settings choose.
+
+Whether to rely on sync is the caller's decision. The library sends exactly the calls you make.
+
+## Shapes that differ from Yealink's reference
+
+The live API was checked against the V4X reference, and these methods follow the API where the
+two disagree:
+
+- `addDevices`, `addRpsDevices` and `bindAccounts` send a bare JSON array. Wrapping it in an object
+  answers 412, as if the body were missing.
+- `updateSipAccount` takes the whole account, and `updateRpsServer` needs both `serverName` and
+  `url`. A partial body answers 400.
+- A device has at most one device config, and it cannot be updated: `createDeviceConfig` a second
+  time answers 400 code `800003`, and PATCH answers 405. Delete it and create it again.
+- RPS servers are deleted in bulk with `deleteRpsServers`. The API has no single-server DELETE.
+- `rebootDeviceParts` and `resetDeviceParts` use `/v2/dm/devices/…`. The reference's
+  `/v2/dm/device/…` answers 404.
 
 ## Two Yealink spellings
 

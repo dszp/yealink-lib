@@ -23,7 +23,7 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **`YmcsApiError`** carrying `status`, `code`, `requestId` and per-field `details`.
 - No default region: `region` or `baseUrl` is required.
 
-### Verified live (2026-09-22, read-only, one production enterprise)
+### Verified live: reads (2026-09-22, one production enterprise)
 
 - Auth, sites, devices (250-row walk at the 100 cap), models, device lookup by MAC, firmware,
   alarms, operation logs, RPS servers and devices, configuration templates.
@@ -38,9 +38,30 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `personCount`, `lanIp`/`wanIp`); the list row carries `modelName`, `siteName`, `groupNames`,
   `lastReportTime`. Neither is in the reference's example.
 
+### Verified live: writes (2026-09-23, same enterprise, one bench phone)
+
+Every write method except `addDevicesByMac` (the enterprise is not enabled for it) and
+`startPacketCapture` (the server rejects a `duration` of 60 and does not document the values it
+accepts). Ten methods, carried over from the n8n node, sent requests the API rejected; they now
+send what the API accepts:
+
+- `addDevices`, `addRpsDevices` and `bindAccounts` send a bare array; an object answers 412.
+- `CreateSipAccountInput` takes `sipServer1: { host, port }`, and `updateSipAccount` takes the
+  whole account, because a partial body answers 400.
+- `DeviceConfigInput` is `{ deviceId, content, autoPush? }`, one per device. `updateDeviceConfig`
+  is removed: the API answers PATCH with 405.
+- `updateRpsServer` requires `serverName` and `url`. `deleteRpsServer` is replaced by
+  `deleteRpsServers(ids)` (`POST /v2/rps/delServers`); the API has no single-server DELETE.
+- `deleteRpsDevices(deviceIds, deviceIdType)` posts to `/v2/rps/delDevices` with
+  `{ deviceIdType, deviceIds }`, and returns the bulk result.
+
+Also added: `YmcsBulkResult` and `YmcsCreated` as return types, `SipServer` and `BindAccount` as
+input types, `YmcsReadClient.getRpsServer`, and `src/live.test.ts`, an opt-in live suite in three
+tiers (reads, throwaway objects, a named bench phone).
+
 ### Notes
 
-- Extracted from `@dszp/n8n-nodes-yealinkymcs` 0.3.0. Request shapes are the ones that node
-  exercised against live YMCS; the offline suite covers every method's wire shape.
-- Not yet published. The first publish is manual (npm attaches a trusted publisher only to an
-  existing package); releases after that run from a GitHub Release.
+- Extracted from `@dszp/n8n-nodes-yealinkymcs` 0.3.0. The offline suite covers every method's wire
+  shape; `src/live.test.ts` covers the live API when credentials are set.
+- The first publish is manual (npm attaches a trusted publisher only to an existing package);
+  releases after that run from a GitHub Release.

@@ -52,6 +52,7 @@ describe('GET reads', () => {
     ['getFirmware', ['fw-1'], '/v2/dm/firmwares/fw-1'],
     ['getDiagnosisStatus', ['diag-1'], '/v2/dm/diagnosis/diag-1/status'],
     ['getRpsDevice', ['rps-1'], '/v2/rps/devices/rps-1'],
+    ['getRpsServer', ['srv-1'], '/v2/rps/servers/srv-1'],
   ] as const)('%s → GET %s', async (method, args, path) => {
     const { mock, c } = client({ routes: { [`GET ${path}`]: { body: { id: 'x' } } } });
     const out = await (c[method] as (...a: string[]) => Promise<unknown>)(...args);

@@ -161,6 +161,24 @@ export interface YmcsBoundAccount extends Rec {
   username?: string;
 }
 
+/**
+ * What every bulk call answers (`delDevices`, `device/reboot`, `bindAccounts`, `rps/delDevices`, …).
+ * The HTTP status is 200 even when items fail: a MAC that does not exist comes back as
+ * `failureCount: 1` with an entry in `errors`, not as an error response. Check `failureCount`.
+ */
+export interface YmcsBulkResult extends Rec {
+  total: number;
+  successCount: number;
+  failureCount: number;
+  /** `field` names the item that failed (an id or MAC); `msg` says why. `null` or `[]` when none failed. */
+  errors: Array<{ field: string; msg: string }> | null;
+}
+
+/** What config-template creates answer: the new id and nothing else. */
+export interface YmcsCreated extends Rec {
+  id: string;
+}
+
 /** Answer to `POST /v2/dm/deviceId`: one row per requested key that the enterprise owns. */
 export interface DeviceIdLookup {
   key: string;

@@ -8,13 +8,15 @@ function client(opts: MockFetchOptions = {}) {
 }
 
 const DEV = { mac: '001565000001', sn: 'SN000000000001', deviceType: 1 as const, modelId: 'model-t54w' };
+const SIP = { registerName: '101', username: '101', password: 'pw', sipServer1: { host: 'sip.example.com', port: 5060 } };
+const RPS_SERVER = { serverName: 'ndp', url: 'https://ndp.example.com/cfg' };
 
 describe('creates (POST, return the server body)', () => {
   it.each([
     ['createSite', [{ name: 'Branch', parentId: 'site-root' }], '/v2/dm/sites', { name: 'Branch', parentId: 'site-root' }],
     ['createDevice', [DEV], '/v2/dm/devices', DEV],
-    ['addDevices', [[DEV]], '/v2/dm/addDevices', { devices: [DEV] }],
-    ['addDevicesByMac', [[{ mac: DEV.mac, deviceType: 1, modelId: DEV.modelId }]], '/v2/dm/addDevicesByMac', { devices: [{ mac: DEV.mac, deviceType: 1, modelId: DEV.modelId }] }],
+    ['addDevices', [[DEV]], '/v2/dm/addDevices', [DEV]],
+    ['addDevicesByMac', [[{ mac: DEV.mac, deviceType: 1, modelId: DEV.modelId }]], '/v2/dm/addDevicesByMac', [{ mac: DEV.mac, deviceType: 1, modelId: DEV.modelId }]],
     ['deleteDevices', [['dev-1', 'dev-2'], 1], '/v2/dm/delDevices', { deviceIds: ['dev-1', 'dev-2'], deviceType: 1 }],
     ['deleteDevices', [['001565000001'], 1, { deviceIdType: 'mac' }], '/v2/dm/delDevices', { deviceIds: ['001565000001'], deviceType: 1, deviceIdType: 'mac' }],
     ['rebootDevices', [['dev-1'], 1], '/v2/dm/device/reboot', { deviceIds: ['dev-1'], deviceType: 1 }],
@@ -22,14 +24,14 @@ describe('creates (POST, return the server body)', () => {
     ['rebootDeviceParts', ['dev-1'], '/v2/dm/devices/dev-1/parts/reboot', {}],
     ['rebootDeviceParts', ['dev-1', ['p1']], '/v2/dm/devices/dev-1/parts/reboot', { partIds: ['p1'] }],
     ['resetDeviceParts', ['dev-1', ['p1']], '/v2/dm/devices/dev-1/parts/reset', { partIds: ['p1'] }],
-    ['bindAccounts', ['dev-1', [{ accountId: 'acc-1', lineId: 1 }]], '/v2/dm/devices/dev-1/bindAccounts', { accounts: [{ accountId: 'acc-1', lineId: 1 }] }],
+    ['bindAccounts', ['dev-1', [{ accountId: 'acc-1', lineId: 1, accountType: 0 }]], '/v2/dm/devices/dev-1/bindAccounts', [{ accountId: 'acc-1', lineId: 1, accountType: 0 }]],
     ['unbindAccounts', ['dev-1', ['acc-1']], '/v2/dm/devices/dev-1/unbindAccounts', { accountIds: ['acc-1'] }],
     ['createDeviceGroup', [{ name: 'Lobby', deviceType: 1 }], '/v2/dm/deviceGroups', { name: 'Lobby', deviceType: 1 }],
     ['addDevicesToGroup', ['grp-1', ['dev-1']], '/v2/dm/deviceGroups/grp-1/addDevices', { deviceIds: ['dev-1'] }],
     ['removeDevicesFromGroup', ['grp-1', ['dev-1']], '/v2/dm/deviceGroups/grp-1/delDevices', { deviceIds: ['dev-1'] }],
-    ['createSipAccount', [{ registerName: '101', username: '101', password: 'pw', sipServer1Host: 'sip.example.com', sipServer1Port: 5060 }], '/v2/dm/sipAccounts', { registerName: '101', username: '101', password: 'pw', sipServer1Host: 'sip.example.com', sipServer1Port: 5060 }],
+    ['createSipAccount', [SIP], '/v2/dm/sipAccounts', SIP],
     ['deleteSipAccounts', [['acc-1']], '/v2/dm/delAccounts', { accountIds: ['acc-1'] }],
-    ['createDeviceConfig', [{ name: 'c', modelId: 'm' }], '/v2/dm/deviceConfigs', { name: 'c', modelId: 'm' }],
+    ['createDeviceConfig', [{ deviceId: 'dev-1', content: 'lang.wui=English', autoPush: false }], '/v2/dm/deviceConfigs', { deviceId: 'dev-1', content: 'lang.wui=English', autoPush: false }],
     ['deleteDeviceConfigs', [['cfg-1']], '/v2/dm/delDeviceConfigs', { configIds: ['cfg-1'] }],
     ['pushDeviceConfig', ['cfg-1'], '/v2/dm/deviceConfigs/cfg-1/push', {}],
     ['createSiteConfig', [{ name: 'c', siteId: 's', deviceType: 1 }], '/v2/dm/siteConfigs', { name: 'c', siteId: 's', deviceType: 1 }],
@@ -41,8 +43,10 @@ describe('creates (POST, return the server body)', () => {
     ['pushFirmware', ['fw-1', ['dev-1'], 1], '/v2/dm/firmwares/fw-1/push', { deviceIds: ['dev-1'], deviceType: 1 }],
     ['pushOfficialFirmware', ['ofw-1', ['dev-1'], 1], '/v2/dm/officalFirmwares/ofw-1/push', { deviceIds: ['dev-1'], deviceType: 1 }],
     ['createRpsDevice', [{ mac: DEV.mac, sn: DEV.sn, serverId: 'srv-1' }], '/v2/rps/devices', { mac: DEV.mac, sn: DEV.sn, serverId: 'srv-1' }],
-    ['addRpsDevices', [[{ mac: DEV.mac }]], '/v2/rps/addDevices', { devices: [{ mac: DEV.mac }] }],
-    ['createRpsServer', [{ serverName: 'ndp', url: 'https://ndp.example.com/cfg' }], '/v2/rps/servers', { serverName: 'ndp', url: 'https://ndp.example.com/cfg' }],
+    ['addRpsDevices', [[{ mac: DEV.mac }]], '/v2/rps/addDevices', [{ mac: DEV.mac }]],
+    ['deleteRpsDevices', [[DEV.mac], 'mac'], '/v2/rps/delDevices', { deviceIdType: 'mac', deviceIds: [DEV.mac] }],
+    ['deleteRpsServers', [['srv-1']], '/v2/rps/delServers', { serverIds: ['srv-1'] }],
+    ['createRpsServer', [RPS_SERVER], '/v2/rps/servers', RPS_SERVER],
   ] as const)('%s → POST %s', async (method, args, path, body) => {
     const { mock, w } = client({ routes: { [`POST ${path}`]: { body: { id: 'new-1' } } } });
     const out = await (w[method] as (...a: unknown[]) => Promise<unknown>)(...args);
@@ -66,12 +70,11 @@ describe('updates (PATCH, 204, return void)', () => {
     ['updateSite', ['site-1', { name: 'n' }], '/v2/dm/sites/site-1', { name: 'n' }],
     ['updateDevice', ['dev-1', { siteId: 'site-2' }], '/v2/dm/devices/dev-1', { siteId: 'site-2' }],
     ['updateDeviceGroup', ['grp-1', { name: 'g', deviceType: 1 }], '/v2/dm/deviceGroups/grp-1', { name: 'g', deviceType: 1 }],
-    ['updateSipAccount', ['acc-1', { label: 'L' }], '/v2/dm/sipAccounts/acc-1', { label: 'L' }],
-    ['updateDeviceConfig', ['cfg-1', { name: 'c', modelId: 'm' }], '/v2/dm/deviceConfigs/cfg-1', { name: 'c', modelId: 'm' }],
+    ['updateSipAccount', ['acc-1', SIP], '/v2/dm/sipAccounts/acc-1', SIP],
     ['updateSiteConfig', ['cfg-1', { name: 'c', siteId: 's', deviceType: 1 }], '/v2/dm/siteConfigs/cfg-1', { name: 'c', siteId: 's', deviceType: 1 }],
     ['updateGroupConfig', ['cfg-1', { name: 'c', deviceGroupId: 'g', deviceType: 1 }], '/v2/dm/groupConfigs/cfg-1', { name: 'c', deviceGroupId: 'g', deviceType: 1 }],
     ['updateRpsDevice', ['rps-1', { serverId: 'srv-2' }], '/v2/rps/devices/rps-1', { serverId: 'srv-2' }],
-    ['updateRpsServer', ['srv-1', { url: 'https://ndp2.example.com' }], '/v2/rps/servers/srv-1', { url: 'https://ndp2.example.com' }],
+    ['updateRpsServer', ['srv-1', RPS_SERVER], '/v2/rps/servers/srv-1', RPS_SERVER],
   ] as const)('%s → PATCH %s', async (method, args, path, body) => {
     const { mock, w } = client({ routes: { [`PATCH ${path}`]: { status: 204 } } });
     const out = await (w[method] as (...a: unknown[]) => Promise<unknown>)(...args);
@@ -82,7 +85,7 @@ describe('updates (PATCH, 204, return void)', () => {
     expect(call.body).toEqual(body);
   });
 
-  it.each(['updateSite', 'updateDevice', 'updateSipAccount', 'updateRpsDevice', 'updateRpsServer'] as const)('%s refuses an empty patch before the wire', async (method) => {
+  it.each(['updateSite', 'updateDevice', 'updateRpsDevice'] as const)('%s refuses an empty patch before the wire', async (method) => {
     const { mock, w } = client();
     await expect((w[method] as (id: string, p: object) => Promise<void>)('x-1', {})).rejects.toThrow(/at least one field/);
     expect(mock.apiCalls()).toHaveLength(0);
@@ -94,7 +97,6 @@ describe('deletes', () => {
     ['deleteSite', ['site-1'], '/v2/dm/sites/site-1'],
     ['deleteDevice', ['dev-1'], '/v2/dm/devices/dev-1'],
     ['deleteDeviceGroup', ['grp-1'], '/v2/dm/deviceGroups/grp-1'],
-    ['deleteRpsServer', ['srv-1'], '/v2/rps/servers/srv-1'],
   ] as const)('%s → DELETE %s, no body, void', async (method, args, path) => {
     const { mock, w } = client({ routes: { [`DELETE ${path}`]: { status: 204 } } });
     expect(await (w[method] as (...a: string[]) => Promise<void>)(...args)).toBeUndefined();
@@ -102,12 +104,6 @@ describe('deletes', () => {
     expect(call.method).toBe('DELETE');
     expect(call.path).toBe(path);
     expect(call.body).toBeUndefined();
-  });
-
-  it('deleteRpsDevices posts ids + idType and returns void', async () => {
-    const { mock, w } = client();
-    expect(await w.deleteRpsDevices(['001565000001'], 'mac')).toBeUndefined();
-    expect(mock.apiCalls()[0].body).toEqual({ ids: ['001565000001'], idType: 'mac' });
   });
 });
 

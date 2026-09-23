@@ -6,7 +6,7 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
   test: {
     include: ['src/**/*.test.ts'],
-    // Live smoke tests are `*.live.test.ts`; they self-skip without ONEBILL_* credentials.
+    // Live smoke tests are `*.live.test.ts`; they self-skip without YMCS_* credentials.
     environment: 'node',
   },
 });

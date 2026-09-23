@@ -70,6 +70,8 @@ method can be added without changing the array-returning ones.
 
 This library was extracted from `@dszp/n8n-nodes-yealinkymcs`, whose credential and generic
 functions held the same auth and paging logic against n8n's request helpers. The node's sixteen
-description files (the UI) stay with the node; the request shapes in `writeClient.ts` are the ones
-the node exercised live. The node may consume this library in a future release; nothing here
-depends on it.
+description files (the UI) stay with the node. The node's write shapes were a starting point, not
+a source of truth: checking them live found ten methods whose requests the API rejects, among them bare-array
+bodies, the SIP server object, the device-config body, and the RPS delete paths. The library is
+now the more accurate of the two. The node may consume it in a future release; nothing here
+depends on the node.

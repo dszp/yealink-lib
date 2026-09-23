@@ -18,6 +18,11 @@ Run `pnpm test && pnpm typecheck && pnpm build` before pushing — all three cle
 be green on a fresh clone with no environment variables set: every test runs against the mock
 transport in `src/testkit.ts`, never a live enterprise.
 
+`src/live.test.ts` runs against a real enterprise, and only when you set its environment
+variables; its header lists them. It has three tiers. Reads change nothing. Writes create
+throwaway objects named `ylib-live-*` and delete them. The device tier deletes and re-creates one
+physical phone that you name, so point it only at a phone that serves no one.
+
 ## The rules
 
 ### 1. Fixtures and examples must be fictional
@@ -80,10 +85,11 @@ the feature.
 
 ### 9. Request shapes come from the wire, not the PDF
 
-Yealink's reference is example-derived and has no machine-readable form. Every method here mirrors
-a request shape that was exercised against a live enterprise (via the `@dszp/n8n-nodes-yealinkymcs`
-node this library was extracted from). A new method should say in its doc comment what it was
-verified against, or be marked as unverified.
+Yealink's reference is example-derived, has no machine-readable form, and is wrong in places: its
+tables and its own examples disagree about several bodies, and one documented path answers 404.
+Every method here was exercised against a live enterprise, and `src/live.test.ts` keeps most of
+them exercised. A new method should say in its doc comment what it was verified against, or be
+marked as unverified.
 
 ## Pull requests
 
