@@ -1,6 +1,6 @@
 {
   "name": "@dszp/yealink-lib",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Portable, Node-free toolkit for Yealink's device-management cloud (YMCS and RPS, one Open API): OAuth2 client-credentials auth with the timestamp/nonce headers, split read/write API clients, and skip/limit/autoCount pagination. Runs unchanged in a Cloudflare Worker, Node, or the browser.",
   "type": "module",
   "license": "MIT",

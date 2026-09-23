@@ -5,7 +5,14 @@ All notable changes to `@dszp/yealink-lib` are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.1.0] — 2026-09-22
+## [0.1.1] — 2026-09-23
+
+### Changed
+
+- First release published from a GitHub Release through npm trusted publishing (OIDC), with a
+  provenance attestation. No code changes from 0.1.0.
+
+## [0.1.0] — 2026-09-23
 
 ### Added
 
@@ -63,5 +70,5 @@ tiers (reads, throwaway objects, a named bench phone).
 
 - Extracted from `@dszp/n8n-nodes-yealinkymcs` 0.3.0. The offline suite covers every method's wire
   shape; `src/live.test.ts` covers the live API when credentials are set.
-- The first publish is manual (npm attaches a trusted publisher only to an existing package);
-  releases after that run from a GitHub Release.
+- Published by hand: npm attaches a trusted publisher only to a package that already exists.
+  Releases after this one run from a GitHub Release.
