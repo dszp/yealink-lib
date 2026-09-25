@@ -5,6 +5,13 @@ All notable changes to `@dszp/yealink-lib` are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.2] — 2026-09-25
+
+### Changed
+
+- Documented that `resolveDeviceIds` does not return results in request order; callers must
+  correlate on each entry's `key`. The README example now does so. Doc-only change.
+
 ## [0.1.1] — 2026-09-23
 
 ### Changed

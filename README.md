@@ -37,10 +37,12 @@ const read = new YmcsReadClient({
 const sites = await read.listSites();
 const online = await read.listDevices({ filter: { deviceStatus: 1, siteId: sites[0].id } });
 const ids = await read.resolveDeviceIds(['001565000001'], DeviceType.Phone);
+// Results come back in any order, and unknown MACs are omitted: match on `key`, not position.
+const deviceId = ids.find((r) => r.key === '001565000001')?.deviceId;
 
 const write = new YmcsWriteClient({ clientId, clientSecret, region: 'us' });
 await write.createRpsDevice({ mac: '001565000001', sn: 'SN000000000001', serverId: 'srv-0001' });
-await write.rebootDevices([ids[0].deviceId], DeviceType.Phone);
+if (deviceId) await write.rebootDevices([deviceId], DeviceType.Phone);
 ```
 
 ### In a Worker: share the token through KV

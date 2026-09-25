@@ -110,7 +110,8 @@ export class YmcsReadClient {
 
   /**
    * MAC → device id, for devices the enterprise owns. Keys the server does not know are simply
-   * absent from the answer, so a short result is a partial match, not an error.
+   * absent from the answer, so a short result is a partial match, not an error. Results are not
+   * in request order; correlate on each entry's `key` (the MAC as sent), never on position.
    */
   async resolveDeviceIds(macs: string[], deviceType: DeviceType): Promise<DeviceIdLookup[]> {
     return this.#http.request<DeviceIdLookup[]>('POST', '/v2/dm/deviceId', {
